@@ -63,7 +63,6 @@
       },
       {
         "parameters": {
-          "operation": "upsert",
           "tableId": "websites",
           "dataToSend": "autoMapInputData"
         },
@@ -71,7 +70,7 @@
         "typeVersion": 1,
         "position": [600, -200],
         "id": "2cf1af41-96f6-44c7-a44b-0a601973be56",
-        "name": "Upsert a row",
+        "name": "Create a row",
         "continueOnFail": true
       },
       {
@@ -302,7 +301,7 @@
         "main": [
           [
             {
-              "node": "Upsert a row",
+              "node": "Create a row",
               "type": "main",
               "index": 0
             },
