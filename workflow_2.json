@@ -1,437 +1,421 @@
-{
-  "nodes": [
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "/home",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
-      "position": [0, 0],
-      "id": "0954264b-178a-4118-9ce0-c642663f7104",
-      "name": "Webhook",
-      "webhookId": "8ab6c55e-719b-45cf-9a10-f8f94a700491"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "007f7bc0-1791-41c0-8f58-4dfdedd79f87",
-              "name": "website_id",
-              "value": "={{ $json.body.url.replace(/^https?:\\/\\//, '').replace(/^www\\./, '').replace(/[\\/\\.]/g, '-').replace(/-$/, '') }}",
-              "type": "string"
-            }
-          ]
+  {
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "/home",
+          "responseMode": "responseNode",
+          "options": {}
         },
-        "includeOtherFields": true,
-        "options": {}
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [0, 0],
+        "id": "0954264b-178a-4118-9ce0-c642663f7104",
+        "name": "Webhook",
+        "webhookId": "8ab6c55e-719b-45cf-9a10-f8f94a700491"
       },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [200, 0],
-      "id": "97f1f95b-9443-4567-b540-4c7c196f250c",
-      "name": "website-ID"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "703822e2-3afa-4680-8985-ee1d73bcd592",
-              "name": "source_url",
-              "value": "={{ $json.body.url }}",
-              "type": "string"
-            },
-            {
-              "id": "55434851-5e1e-4160-8003-3a9293702f21",
-              "name": "website_id",
-              "value": "={{ $json.website_id }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [400, 0],
-      "id": "099b6369-f6a3-4cc9-b1e6-ee12a4a91466",
-      "name": "domain-url/wesiteID"
-    },
-    {
-      "parameters": {
-        "tableId": "websites",
-        "dataToSend": "autoMapInputData"
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [600, -200],
-      "id": "2cf1af41-96f6-44c7-a44b-0a601973be56",
-      "name": "Create a row",
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "url": "={{ $json.source_url }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "User-Agent",
-              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            }
-          ]
-        },
-        "options": {
-          "allowUnauthorizedCerts": true
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [600, 200],
-      "id": "fetch-homepage-node",
-      "name": "Fetch Homepage",
-      "continueOnFail": true,
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "operation": "extract",
-        "extractionValues": {
-          "values": [
-            {
-              "key": "links",
-              "cssSelector": "a",
-              "returnValue": "attribute",
-              "attribute": "href",
-              "returnArray": true
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.html",
-      "typeVersion": 1,
-      "position": [800, 200],
-      "id": "extract-links-node",
-      "name": "Extract Links",
-      "continueOnFail": true,
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "jsCode": "const baseUrl = $('domain-url/wesiteID').first().json.source_url;\nconst urlObj = new URL(baseUrl);\nconst domain = urlObj.hostname;\n\nconst rawLinks = $input.first().json.links || [];\nlet validLinks = new Set();\n\n// Always include the homepage itself\nvalidLinks.add(baseUrl.replace(/\\/$/, ''));\n\nfor (let link of rawLinks) {\n  if (!link) continue;\n  try {\n    let fullUrl = link;\n    if (link.startsWith('/')) {\n      fullUrl = urlObj.origin + link;\n    }\n    \n    const linkObj = new URL(fullUrl);\n    \n    if (linkObj.hostname === domain && !fullUrl.includes('#') && linkObj.protocol.startsWith('http')) {\n      validLinks.add((linkObj.origin + linkObj.pathname).replace(/\\/$/, ''));\n    }\n  } catch (e) {\n  }\n}\n\nreturn Array.from(validLinks).map(url => ({ json: { url } }));"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1000, 200],
-      "id": "filter-links-node",
-      "name": "Filter & Deduplicate",
-      "alwaysOutputData": true,
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "url": "={{ $json.url }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "User-Agent",
-              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            }
-          ]
-        },
-        "options": {
-          "allowUnauthorizedCerts": true
-        }
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [1200, 200],
-      "id": "fetch-page-node",
-      "name": "Fetch Page HTML",
-      "continueOnFail": true,
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "operation": "extract",
-        "extractionValues": {
-          "values": [
-            {
-              "key": "text",
-              "cssSelector": "body",
-              "returnValue": "text"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.html",
-      "typeVersion": 1,
-      "position": [1400, 200],
-      "id": "extract-text-node",
-      "name": "HTML Extract",
-      "continueOnFail": true,
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "jsCode": "const website_id = $('domain-url/wesiteID').first().json.website_id;\nconst url = $input.first().json.url || '';\n\nreturn {\n  text: $json.text || '',\n  metadata: {\n    website_id: website_id,\n    url: url\n  }\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1600, 200],
-      "id": "format-document-node",
-      "name": "Format for LangChain",
-      "alwaysOutputData": true,
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "mode": "insert",
-        "tableName": {
-          "__rl": true,
-          "value": "crawled_pages",
-          "mode": "list",
-          "cachedResultName": "crawled_pages"
-        },
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
-      "typeVersion": 1.3,
-      "position": [2000, 200],
-      "id": "1037a4a4-c1c3-49f1-9f60-4d308203a610",
-      "name": "Supabase Vector Store",
-      "alwaysOutputData": true,
-      "continueOnFail": true
-    },
-    {
-      "parameters": {
-        "textSplittingMode": "custom",
-        "options": {
-          "metadata": {
-            "metadataValues": [
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
               {
+                "id": "007f7bc0-1791-41c0-8f58-4dfdedd79f87",
                 "name": "website_id",
-                "value": "={{ $json.metadata.website_id }}"
-              },
-              {
-                "name": "url",
-                "value": "={{ $json.metadata.url }}"
+                "value": "={{ $json.body.url.replace(/^https?:\\/\\//, '').replace(/^www\\./, '').replace(/[\\/\\.]/g, '-').replace(/-$/, '') }}",
+                "type": "string"
               }
             ]
-          }
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
-      "typeVersion": 1.1,
-      "position": [2050, 400],
-      "id": "84f2c3ae-aee4-4d58-9cdb-3243bf175326",
-      "name": "Default Data Loader"
-    },
-    {
-      "parameters": {
-        "chunkSize": 1500,
-        "chunkOverlap": 300,
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
-      "typeVersion": 1,
-      "position": [2050, 600],
-      "id": "f63d44a3-02a9-405f-88af-85df394b2c19",
-      "name": "Recursive Character Text Splitter"
-    },
-    {
-      "parameters": {},
-      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
-      "typeVersion": 1,
-      "position": [1950, 400],
-      "id": "56d33afa-ea34-45e5-8a85-8b05572b406a",
-      "name": "Embeddings Google Gemini"
-    },
-    {
-      "parameters": {
-        "jsCode": "const website_id = $('domain-url/wesiteID').first().json.website_id;\nconst items = $('Format for LangChain').all();\n\nlet totalTextLength = 0;\nfor (let item of items) {\n  if (item.json && typeof item.json.text === 'string') {\n    totalTextLength += item.json.text.trim().length;\n  }\n}\n\nif (totalTextLength < 50) {\n  return [{\n    json: {\n      success: false,\n      error: \"Could not extract text from this website. It likely blocks bots or requires a JavaScript-enabled crawler (like Puppeteer/Firecrawl).\"\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    success: true,\n    website_id: website_id,\n    chatbot_url: `http://localhost:5174/bot/${website_id}`\n  }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [2300, 200],
-      "id": "3fcab61c-6863-417e-8404-1d29c70b9b01",
-      "name": "Response Logic"
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ $json }}",
-        "options": {
-          "responseCode": "={{ $json.success ? 200 : 400 }}"
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [2600, 200],
-      "id": "respond-webhook-node",
-      "name": "Respond to Webhook"
-    }
-  ],
-  "connections": {
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "website-ID",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "website-ID": {
-      "main": [
-        [
-          {
-            "node": "domain-url/wesiteID",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "domain-url/wesiteID": {
-      "main": [
-        [
-          {
-            "node": "Create a row",
-            "type": "main",
-            "index": 0
           },
-          {
-            "node": "Fetch Homepage",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fetch Homepage": {
-      "main": [
-        [
-          {
-            "node": "Extract Links",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extract Links": {
-      "main": [
-        [
-          {
-            "node": "Filter & Deduplicate",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Filter & Deduplicate": {
-      "main": [
-        [
-          {
-            "node": "Fetch Page HTML",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fetch Page HTML": {
-      "main": [
-        [
-          {
-            "node": "HTML Extract",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTML Extract": {
-      "main": [
-        [
-          {
-            "node": "Format for LangChain",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Format for LangChain": {
-      "main": [
-        [
-          {
-            "node": "Supabase Vector Store",
-            "type": "main",
-            "index": 0
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [200, 0],
+        "id": "97f1f95b-9443-4567-b540-4c7c196f250c",
+        "name": "website-ID"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "703822e2-3afa-4680-8985-ee1d73bcd592",
+                "name": "source_url",
+                "value": "={{ $json.body.url }}",
+                "type": "string"
+              },
+              {
+                "id": "55434851-5e1e-4160-8003-3a9293702f21",
+                "name": "website_id",
+                "value": "={{ $json.website_id }}",
+                "type": "string"
+              }
+            ]
           },
-          {
-            "node": "Response Logic",
-            "type": "main",
-            "index": 0
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [400, 0],
+        "id": "099b6369-f6a3-4cc9-b1e6-ee12a4a91466",
+        "name": "domain-url/wesiteID"
+      },
+      {
+        "parameters": {
+          "tableId": "websites",
+          "dataToSend": "autoMapInputData"
+        },
+        "type": "n8n-nodes-base.supabase",
+        "typeVersion": 1,
+        "position": [600, -200],
+        "id": "2cf1af41-96f6-44c7-a44b-0a601973be56",
+        "name": "Create a row",
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "url": "https://r.jina.ai/={{ $json.source_url }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "X-Return-Format",
+                "value": "html"
+              }
+            ]
+          },
+          "options": {
+            "allowUnauthorizedCerts": true
           }
-        ]
-      ]
-    },
-    "Response Logic": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
-            "type": "main",
-            "index": 0
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [600, 200],
+        "id": "fetch-homepage-node",
+        "name": "Fetch Homepage",
+        "continueOnFail": true,
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "operation": "extract",
+          "extractionValues": {
+            "values": [
+              {
+                "key": "links",
+                "cssSelector": "a",
+                "returnValue": "attribute",
+                "attribute": "href",
+                "returnArray": true
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.html",
+        "typeVersion": 1,
+        "position": [800, 200],
+        "id": "extract-links-node",
+        "name": "Extract Links",
+        "continueOnFail": true,
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "jsCode": "const baseUrl = $('domain-url/wesiteID').first().json.source_url;\nconst urlObj = new URL(baseUrl);\nconst domain = urlObj.hostname;\n\nconst rawLinks = $input.first().json.links || [];\nlet validLinks = new Set();\n\n// Always include the homepage itself\nvalidLinks.add(baseUrl.replace(/\\/$/, ''));\n\nfor (let link of rawLinks) {\n  if (!link) continue;\n  try {\n    let fullUrl = link;\n    if (link.startsWith('/')) {\n      fullUrl = urlObj.origin + link;\n    }\n    \n    const linkObj = new URL(fullUrl);\n    \n    if (linkObj.hostname === domain && !fullUrl.includes('#') && linkObj.protocol.startsWith('http')) {\n      validLinks.add((linkObj.origin + linkObj.pathname).replace(/\\/$/, ''));\n    }\n  } catch (e) {\n  }\n}\n\nreturn Array.from(validLinks).map(url => ({ json: { url } }));"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [1000, 200],
+        "id": "filter-links-node",
+        "name": "Filter & Deduplicate",
+        "alwaysOutputData": true,
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "url": "https://r.jina.ai/={{ $json.url }}",
+          "sendHeaders": false,
+          "headerParameters": {
+            "parameters": []
+          },
+          "options": {
+            "allowUnauthorizedCerts": true
           }
-        ]
-      ]
-    },
-    "Default Data Loader": {
-      "ai_document": [
-        [
-          {
-            "node": "Supabase Vector Store",
-            "type": "ai_document",
-            "index": 0
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [1200, 200],
+        "id": "fetch-page-node",
+        "name": "Fetch Page HTML",
+        "continueOnFail": true,
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "operation": "extract",
+          "extractionValues": {
+            "values": [
+              {
+                "key": "text",
+                "cssSelector": "body",
+                "returnValue": "text"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.html",
+        "typeVersion": 1,
+        "position": [1400, 200],
+        "id": "extract-text-node",
+        "name": "HTML Extract",
+        "continueOnFail": true,
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "jsCode": "const website_id = $('domain-url/wesiteID').first().json.website_id;\nconst url = $('Filter & Deduplicate').first().json.url || '';\n\nreturn {\n  text: typeof $json.data === 'string' ? $json.data : JSON.stringify($json),\n  metadata: {\n    website_id: website_id,\n    url: url\n  }\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [1600, 200],
+        "id": "format-document-node",
+        "name": "Format for LangChain",
+        "alwaysOutputData": true,
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "mode": "insert",
+          "tableName": {
+            "__rl": true,
+            "value": "crawled_pages",
+            "mode": "list",
+            "cachedResultName": "crawled_pages"
+          },
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+        "typeVersion": 1.3,
+        "position": [2000, 200],
+        "id": "1037a4a4-c1c3-49f1-9f60-4d308203a610",
+        "name": "Supabase Vector Store",
+        "alwaysOutputData": true,
+        "continueOnFail": true
+      },
+      {
+        "parameters": {
+          "textSplittingMode": "custom",
+          "options": {
+            "metadata": {
+              "metadataValues": [
+                {
+                  "name": "website_id",
+                  "value": "={{ $json.metadata.website_id }}"
+                },
+                {
+                  "name": "url",
+                  "value": "={{ $json.metadata.url }}"
+                }
+              ]
+            }
           }
-        ]
-      ]
-    },
-    "Recursive Character Text Splitter": {
-      "ai_textSplitter": [
-        [
-          {
-            "node": "Default Data Loader",
-            "type": "ai_textSplitter",
-            "index": 0
+        },
+        "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+        "typeVersion": 1.1,
+        "position": [2050, 400],
+        "id": "84f2c3ae-aee4-4d58-9cdb-3243bf175326",
+        "name": "Default Data Loader"
+      },
+      {
+        "parameters": {
+          "chunkSize": 1500,
+          "chunkOverlap": 300,
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+        "typeVersion": 1,
+        "position": [2050, 600],
+        "id": "f63d44a3-02a9-405f-88af-85df394b2c19",
+        "name": "Recursive Character Text Splitter"
+      },
+      {
+        "parameters": {},
+        "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+        "typeVersion": 1,
+        "position": [1950, 400],
+        "id": "56d33afa-ea34-45e5-8a85-8b05572b406a",
+        "name": "Embeddings Google Gemini"
+      },
+      {
+        "parameters": {
+          "jsCode": "const website_id = $('domain-url/wesiteID').first().json.website_id;\nconst items = $('Format for LangChain').all();\n\nlet totalTextLength = 0;\nfor (let item of items) {\n  if (item.json && typeof item.json.text === 'string') {\n    totalTextLength += item.json.text.trim().length;\n  }\n}\n\nif (totalTextLength < 50) {\n  return [{\n    json: {\n      success: false,\n      error: \"Could not extract text from this website. It likely blocks bots or requires a JavaScript-enabled crawler (like Puppeteer/Firecrawl).\"\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    success: true,\n    website_id: website_id,\n    chatbot_url: `http://localhost:5174/bot/${website_id}`\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [2300, 200],
+        "id": "3fcab61c-6863-417e-8404-1d29c70b9b01",
+        "name": "Response Logic"
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseCode": "={{ $json.success ? 200 : 400 }}"
           }
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.1,
+        "position": [2600, 200],
+        "id": "respond-webhook-node",
+        "name": "Respond to Webhook"
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "website-ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
         ]
-      ]
-    },
-    "Embeddings Google Gemini": {
-      "ai_embedding": [
-        [
-          {
-            "node": "Supabase Vector Store",
-            "type": "ai_embedding",
-            "index": 0
-          }
+      },
+      "website-ID": {
+        "main": [
+          [
+            {
+              "node": "domain-url/wesiteID",
+              "type": "main",
+              "index": 0
+            }
+          ]
         ]
-      ]
+      },
+      "domain-url/wesiteID": {
+        "main": [
+          [
+            {
+              "node": "Create a row",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Fetch Homepage",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Homepage": {
+        "main": [
+          [
+            {
+              "node": "Extract Links",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Links": {
+        "main": [
+          [
+            {
+              "node": "Filter & Deduplicate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Filter & Deduplicate": {
+        "main": [
+          [
+            {
+              "node": "Fetch Page HTML",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Page HTML": {
+        "main": [
+          [
+            {
+              "node": "Format for LangChain",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format for LangChain": {
+        "main": [
+          [
+            {
+              "node": "Supabase Vector Store",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Response Logic",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Response Logic": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Default Data Loader": {
+        "ai_document": [
+          [
+            {
+              "node": "Supabase Vector Store",
+              "type": "ai_document",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Recursive Character Text Splitter": {
+        "ai_textSplitter": [
+          [
+            {
+              "node": "Default Data Loader",
+              "type": "ai_textSplitter",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Embeddings Google Gemini": {
+        "ai_embedding": [
+          [
+            {
+              "node": "Supabase Vector Store",
+              "type": "ai_embedding",
+              "index": 0
+            }
+          ]
+        ]
+      }
     }
   }
-}
