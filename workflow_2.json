@@ -63,6 +63,7 @@
       },
       {
         "parameters": {
+          "operation": "upsert",
           "tableId": "websites",
           "dataToSend": "autoMapInputData"
         },
@@ -70,12 +71,12 @@
         "typeVersion": 1,
         "position": [600, -200],
         "id": "2cf1af41-96f6-44c7-a44b-0a601973be56",
-        "name": "Create a row",
+        "name": "Upsert a row",
         "continueOnFail": true
       },
       {
         "parameters": {
-          "url": "https://r.jina.ai/={{ $json.source_url }}",
+          "url": "=https://r.jina.ai/{{ $json.source_url }}",
           "sendHeaders": true,
           "headerParameters": {
             "parameters": [
@@ -135,7 +136,7 @@
       },
       {
         "parameters": {
-          "url": "https://r.jina.ai/={{ $json.url }}",
+          "url": "=https://r.jina.ai/{{ $json.url }}",
           "sendHeaders": false,
           "headerParameters": {
             "parameters": []
@@ -301,7 +302,7 @@
         "main": [
           [
             {
-              "node": "Create a row",
+              "node": "Upsert a row",
               "type": "main",
               "index": 0
             },
