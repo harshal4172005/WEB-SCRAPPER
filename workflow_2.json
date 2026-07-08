@@ -471,6 +471,9 @@
       ]
     }
   },
+  "id": "rYRM9xH9RUtjtxJJ",
+  "name": "scrapper",
+  "active": true,
   "settings": {
     "saveDataSuccessExecution": "all",
     "saveExecutionProgress": true
