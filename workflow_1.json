@@ -73,7 +73,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = (typeof $json.body === 'object' && $json.body !== null) ? $json.body : $json;\n\nfunction normalizeWebsiteId(value) {\n  const raw = String(value || '').trim();\n  if (!raw) return 'test-website-com';\n\n  try {\n    const candidate = /^https?:\\/\\//i.test(raw) ? raw : 'https://' + raw;\n    const parsed = new URL(candidate);\n    const host = parsed.hostname.replace(/^www\\./i, '');\n    const path = parsed.pathname.replace(/\\/+/g, '/').replace(/^\\/|\\/$/g, '');\n    const combined = [host, path].filter(Boolean).join('-');\n\n    return combined\n      .toLowerCase()\n      .replace(/[^a-z0-9]+/g, '-')\n      .replace(/-+/g, '-')\n      .replace(/^-|-$/g, '');\n  } catch {\n    return raw\n      .replace(/^https?:\\/\\//i, '')\n      .replace(/^www\\./i, '')\n      .replace(/[#?].*$/, '')\n      .replace(/[^a-z0-9]+/gi, '-')\n      .replace(/-+/g, '-')\n      .replace(/^-|-$/g, '')\n      .toLowerCase();\n  }\n}\n\nconst websiteUrl = body.website_id || body.url || body.websiteId || '';\nconst website_id = normalizeWebsiteId(websiteUrl);\n\nreturn [{\n  json: {\n    website_id,\n    question: body.question || 'Test question'\n  }\n}];"
+        "jsCode": "const body = (typeof $json.body === 'object' && $json.body !== null) ? $json.body : $json;\n\nfunction normalizeWebsiteId(value) {\n  const raw = String(value || '').trim();\n  if (!raw) return 'test-website-com';\n\n  return raw\n    .replace(/^https?:\\/\\//i, '')\n    .replace(/^www\\./i, '')\n    .replace(/[#?].*$/, '')\n    .replace(/[^a-z0-9]+/gi, '-')\n    .replace(/-+/g, '-')\n    .replace(/^-|-$/g, '')\n    .toLowerCase();\n}\n\nconst websiteUrl = body.website_id || body.url || body.websiteId || '';\nconst website_id = normalizeWebsiteId(websiteUrl);\n\nreturn [{\n  json: {\n    website_id,\n    question: body.question || 'Test question'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -212,5 +212,11 @@
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "17cbddf8ed0544c6af10e8d6d0096cd82283255b1111618bdc0116ca814e4692"
+  },
+  "id": "k92Zy2GZbpmPccmU",
+  "name": "query flow",
+  "settings": {
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true
   }
 }
