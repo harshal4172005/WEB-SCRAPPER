@@ -20,6 +20,7 @@ x-n8n: &service-n8n
     - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-web-scrapping-bot}
     - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET:-even-more-secret}
     - OLLAMA_HOST=${OLLAMA_HOST:-ollama:11434}
+    - FRONTEND_BASE_URL=${FRONTEND_BASE_URL:-http://localhost:5174}
   env_file:
     - path: backend/.env
       required: true
@@ -79,13 +80,16 @@ services:
     - "-c"
     - |
       if [ -z "$(n8n list:workflow --onlyId)" ]; then
-        n8n import:credentials --separate --input=/demo-data/credentials && \
+        if [ -d /demo-data/credentials ] && [ -n "$(ls -A /demo-data/credentials 2>/dev/null)" ]; then
+          n8n import:credentials --separate --input=/demo-data/credentials
+        fi
         n8n import:workflow --separate --input=/demo-data/workflows
       else
         echo "Workflows exist, skipping import"
       fi
     volumes:
-      - ./n8n/demo-data:/demo-data
+      - ../workflow_1.json:/demo-data/workflows/workflow_1.json
+      - ../workflow_2.json:/demo-data/workflows/workflow_2.json
     depends_on:
       postgres:
         condition: service_healthy
@@ -170,3 +174,4 @@ services:
       - demo
     ports:
       - "8000:8000"
+

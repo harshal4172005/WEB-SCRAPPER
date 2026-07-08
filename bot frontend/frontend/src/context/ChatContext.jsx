@@ -30,7 +30,7 @@ function writeChatSession(session) {
 }
 
 function getWebsiteId(session) {
-  return session?.websiteId || session?.website_id || session?.submittedUrl || '';
+  return normalizeWebsiteId(session?.websiteId || session?.website_id || session?.submittedUrl || '');
 }
 
 function extractAssistantText(data) {
@@ -126,7 +126,7 @@ export function ChatProvider({ children }) {
     dispatch({ type: 'SET_URL_RESULT', payload: null });
     try {
       const data = await api.submitUrl(url);
-      const websiteId = extractWebsiteIdFromResult(data) || url;
+      const websiteId = normalizeWebsiteId(extractWebsiteIdFromResult(data) || url);
       dispatch({ type: 'SET_CURRENT_CONVERSATION', payload: websiteId });
       dispatch({ type: 'SET_WEBSITE_ID', payload: websiteId });
       dispatch({ type: 'SET_URL_RESULT', payload: data });
@@ -161,7 +161,7 @@ export function ChatProvider({ children }) {
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      const websiteId = normalizeWebsiteId(websiteIdOverride) || state.websiteId || state.submittedUrl;
+      const websiteId = normalizeWebsiteId(websiteIdOverride) || normalizeWebsiteId(state.websiteId) || normalizeWebsiteId(state.submittedUrl);
       const data = await api.sendMessage(message, websiteId);
       const assistantMessage = {
         id: (Date.now() + 1).toString(),
@@ -242,3 +242,5 @@ export function ChatProvider({ children }) {
     </ChatContext.Provider>
   );
 }
+
+
