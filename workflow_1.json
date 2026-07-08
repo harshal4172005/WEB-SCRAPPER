@@ -99,7 +99,8 @@
           "metadata": {
             "metadataValues": [
               {
-                "name": "website_id"
+                "name": "website_id",
+                "value": "={{ $json.website_id }}"
               }
             ]
           }
