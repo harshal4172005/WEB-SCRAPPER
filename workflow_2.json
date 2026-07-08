@@ -229,7 +229,13 @@
       "id": "1037a4a4-c1c3-49f1-9f60-4d308203a610",
       "name": "Supabase Vector Store",
       "alwaysOutputData": true,
-      "continueOnFail": true
+      "continueOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "UZ4yE2ZemGK5Pfu3",
+          "name": "Supabase account"
+        }
+      }
     },
     {
       "parameters": {
@@ -282,7 +288,13 @@
         400
       ],
       "id": "56d33afa-ea34-45e5-8a85-8b05572b406a",
-      "name": "Embeddings Google Gemini"
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "mjgjHnFh14jsAK5u",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
     },
     {
       "parameters": {
